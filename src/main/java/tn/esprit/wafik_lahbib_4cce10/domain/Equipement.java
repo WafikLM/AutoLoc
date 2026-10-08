@@ -1,4 +1,4 @@
-package tn.esprit.wafik_lahbib_4cce10.entities;
+package tn.esprit.wafik_lahbib_4cce10.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

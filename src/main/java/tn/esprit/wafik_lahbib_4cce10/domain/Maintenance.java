@@ -1,19 +1,17 @@
-package tn.esprit.wafik_lahbib_4cce10.entities;
+package tn.esprit.wafik_lahbib_4cce10.domain;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -21,20 +19,18 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Paiement {
+public class Maintenance {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idPaiement;
+    private Long idMaintenance;
 
-    private BigDecimal montant;
-    private LocalDate datePaiement;
+    private LocalDate dateDebut;
+    private LocalDate dateFin;
+    private String description;
 
-    @Enumerated(EnumType.STRING)
-    private ModePaiement modePaiement;
-
-    // Côté propriétaire de Contrat <-> Paiement.
-    // Pas de @JoinColumn : Hibernate nomme la colonne contrat_id_contrat (étape 1 de l'atelier).
+    // Côté propriétaire de Vehicule -> Maintenance.
     @ManyToOne(fetch = FetchType.LAZY)
-    private Contrat contrat;
+    @JoinColumn(name = "id_vehicule")
+    private Vehicule vehicule;
 }
