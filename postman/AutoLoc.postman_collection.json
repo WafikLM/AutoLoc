@@ -3808,6 +3808,632 @@
       ]
     },
     {
+      "name": "Véhicules - affectations (agence, équipements)",
+      "item": [
+        {
+          "name": "Créer une 2e agence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/agences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agences"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"AutoLoc Sfax\",\n  \"ville\": \"Sfax\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "pm.environment.set(\"agence2Id\", pm.response.json().idAgence);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer un équipement seul",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/equipements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "equipements"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"libelle\": \"Chaînes neige\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "pm.environment.set(\"equipSeulId\", pm.response.json().idEquipement);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "addAndAssignAgence : véhicule + équipements en cascade",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/agence/{{agenceBaseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "agence",
+                "{{agenceBaseId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"immatriculation\": \"220 TU 4321\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Picanto\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 70.00,\n  \"statut\": \"DISPONIBLE\",\n  \"equipements\": [\n    { \"libelle\": \"GPS\" },\n    { \"libelle\": \"Siège bébé\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "const v = pm.response.json();",
+                  "pm.environment.set(\"vehiculeAffId\", v.idVehicule);",
+                  "pm.test(\"Affecté à l'agence\", () => pm.expect(v.agence.idAgence).to.eql(pm.environment.get(\"agenceBaseId\")));",
+                  "pm.test(\"2 équipements créés en cascade\", () => pm.expect(v.equipements).to.have.lengthOf(2));",
+                  "pm.test(\"Équipements avec identifiant\", () => v.equipements.forEach(e => pm.expect(e.idEquipement).to.be.a(\"number\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "addAndAssignAgence : agence inexistante (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/agence/9999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "agence",
+                "9999"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"immatriculation\": \"220 TU 4321\",\n  \"marque\": \"Kia\",\n  \"modele\": \"Picanto\",\n  \"categorie\": \"CITADINE\",\n  \"tarifJournalier\": 70.00,\n  \"statut\": \"DISPONIBLE\",\n  \"equipements\": [\n    { \"libelle\": \"GPS\" },\n    { \"libelle\": \"Siège bébé\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "addAndAssignAgence : tarif négatif (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/agence/{{agenceBaseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "agence",
+                "{{agenceBaseId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"immatriculation\": \"220 TU 0000\",\n  \"tarifJournalier\": -1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "assignAgence : changer d'agence",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/{{vehiculeAffId}}/agence/{{agence2Id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "{{vehiculeAffId}}",
+                "agence",
+                "{{agence2Id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Nouvelle agence\", () => pm.expect(pm.response.json().agence.idAgence).to.eql(pm.environment.get(\"agence2Id\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "assignAgence : agence inexistante (404)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/{{vehiculeAffId}}/agence/9999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "{{vehiculeAffId}}",
+                "agence",
+                "9999"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "assignAgence : véhicule inexistant (404)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/9999/agence/{{agence2Id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "9999",
+                "agence",
+                "{{agence2Id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "assignEquipement : ajouter un équipement",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/{{vehiculeAffId}}/equipements/{{equipSeulId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "{{vehiculeAffId}}",
+                "equipements",
+                "{{equipSeulId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"3 équipements\", () => pm.expect(pm.response.json().equipements).to.have.lengthOf(3));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "assignEquipement : déjà affecté (400)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/{{vehiculeAffId}}/equipements/{{equipSeulId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "{{vehiculeAffId}}",
+                "equipements",
+                "{{equipSeulId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "assignEquipement : équipement inexistant (404)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/{{vehiculeAffId}}/equipements/9999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "{{vehiculeAffId}}",
+                "equipements",
+                "9999"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "unassignEquipement : retirer l'équipement",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/{{vehiculeAffId}}/equipements/{{equipSeulId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "{{vehiculeAffId}}",
+                "equipements",
+                "{{equipSeulId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"2 équipements\", () => pm.expect(pm.response.json().equipements).to.have.lengthOf(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "L'équipement retiré existe toujours",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/equipements/{{equipSeulId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "equipements",
+                "{{equipSeulId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "unassignEquipement : non affecté (400)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/{{vehiculeAffId}}/equipements/{{equipSeulId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "{{vehiculeAffId}}",
+                "equipements",
+                "{{equipSeulId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "unassignEquipement : véhicule inexistant (404)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/9999/equipements/{{equipSeulId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "9999",
+                "equipements",
+                "{{equipSeulId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage : supprimer le véhicule affecté",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicules/{{vehiculeAffId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicules",
+                "{{vehiculeAffId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage : supprimer l'équipement seul",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/equipements/{{equipSeulId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "equipements",
+                "{{equipSeulId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage : supprimer la 2e agence",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/agences/{{agence2Id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agences",
+                "{{agence2Id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Z - Nettoyage",
       "item": [
         {

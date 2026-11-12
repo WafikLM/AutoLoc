@@ -56,8 +56,9 @@ public class Vehicule {
     private Agence agence;
 
     // Côté propriétaire de Vehicule <-> Equipement : table de jointure vehicule_equipement.
-    // Aucune cascade : les équipements sont partagés entre véhicules.
-    @ManyToMany(fetch = FetchType.LAZY)
+    // Cascade PERSIST seulement : un véhicule peut être ajouté avec ses nouveaux équipements
+    // (addAndAssignAgence). Pas de REMOVE : les équipements sont partagés entre véhicules.
+    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinTable(
             name = "vehicule_equipement",
             joinColumns = @JoinColumn(name = "id_vehicule"),

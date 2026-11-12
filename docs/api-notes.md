@@ -105,3 +105,17 @@ Les deux sont complémentaires : Postman vérifie le comportement, Swagger décr
 3. **201 / 204 / 404 ?** 201 Created signale qu'une nouvelle ressource a été créée (le corps contient son identifiant). 204 No Content signale un succès sans corps à renvoyer (la ressource n'existe plus). Une ressource absente est une erreur du client (mauvais identifiant) : 404 ; 500 voudrait dire un bug du serveur. Le `GlobalExceptionHandler` traduit `ResourceNotFoundException` en 404.
 4. **Pourquoi seulement des GET pour Paiement ?** `IPaiementService` est en lecture seule : un paiement fait partie de la composition Contrat → Paiement ; il est créé, modifié et supprimé à travers son contrat (cascade ALL, orphanRemoval). Un `POST /api/paiements` reçoit **405 Method Not Allowed** (la route existe mais pas pour ce verbe).
 5. **Risques de l'exposition des entités ?** Couplage de l'API au schéma de base (un renommage casse les clients), champs internes visibles ou modifiables (identifiants, associations), boucles de sérialisation et proxys LAZY, requêtes SQL déclenchées pendant la sérialisation, pas de validation adaptée à chaque cas d'usage. `Contrat.paiements` utilise `@JsonManagedReference` car c'est une composition : les paiements arrivent dans le JSON du contrat et doivent recevoir leur parent à la lecture. `Agence.vehicules` utilise `@JsonIgnore` car un véhicule est créé seul et désigne son agence par identifiant : la liste côté agence ne sert ni en lecture ni en écriture.
+
+## F. Services d'affectation du véhicule (travail demandé en séance)
+
+| Méthode de `IVehiculeService` | Route | Succès | Erreurs |
+|---|---|---|---|
+| `addAndAssignAgence(Vehicule vehicule, Long idAgence)` | POST /api/vehicules/agence/{idAgence} | 201 | 400 (id fourni, tarif négatif, libellé vide), 404 (agence ou équipement introuvable) |
+| `assignAgence(Long idVehicule, Long idAgence)` | PUT /api/vehicules/{idVehicule}/agence/{idAgence} | 200 | 404 |
+| `assignEquipement(Long idVehicule, Long idEquipement)` | PUT /api/vehicules/{idVehicule}/equipements/{idEquipement} | 200 | 400 (déjà affecté), 404 |
+| `unassignEquipement(Long idVehicule, Long idEquipement)` | DELETE /api/vehicules/{idVehicule}/equipements/{idEquipement} | 200 | 400 (non affecté), 404 |
+
+- `addAndAssignAgence` : le véhicule arrive en JSON avec sa liste `equipements` ; l'agence est chargée par son identifiant puis affectée (`setAgence`). Les équipements sans identifiant sont créés **en cascade** grâce à `cascade = CascadeType.PERSIST` ajouté sur `Vehicule.equipements` (pas de `REMOVE` : un équipement est partagé entre véhicules). Un équipement avec identifiant doit exister et est repris depuis la base.
+- `assignAgence` / `assignEquipement` / `unassignEquipement` : les deux objets existent déjà ; on modifie seulement le lien (`setAgence`, ajout ou retrait dans la collection `equipements`, donc dans la table `vehicule_equipement`). `unassignEquipement` ne supprime pas l'équipement de la base.
+- `VehiculeServiceImpl` reçoit en plus `IAgenceRepository` et `IEquipementRepository` (injection par constructeur) ; les méthodes sont `@Transactional`.
+- Tests : dossier Postman « Véhicules - affectations (agence, équipements) ».
