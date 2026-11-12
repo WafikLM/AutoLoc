@@ -1,5 +1,7 @@
 package tn.esprit.wafik_lahbib_4cce10.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -41,6 +44,8 @@ public class Contrat {
 
     // Côté inverse de Contrat <-> Paiement (composition) :
     // un paiement n'existe que rattaché à son contrat.
+    // Composition : les paiements sont écrits dans le JSON du contrat (Atelier 5).
+    @JsonManagedReference("contrat-paiements")
     @OneToMany(mappedBy = "contrat", cascade = CascadeType.ALL,
             orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Paiement> paiements = new ArrayList<>();

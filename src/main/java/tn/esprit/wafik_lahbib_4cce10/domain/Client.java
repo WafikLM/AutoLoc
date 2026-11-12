@@ -1,5 +1,7 @@
 package tn.esprit.wafik_lahbib_4cce10.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,6 +38,8 @@ public class Client {
     private LocalDate dateInscription;
 
     // Côté inverse de Client -> Reservation : la clé étrangère id_client est portée par Reservation.
+    // Côté inverse : non sérialisé en JSON (évite la boucle infinie, Atelier 5).
+    @JsonIgnore
     @OneToMany(mappedBy = "client", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private List<Reservation> reservations = new ArrayList<>();
 }

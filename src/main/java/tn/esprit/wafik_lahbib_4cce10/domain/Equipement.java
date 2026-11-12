@@ -1,5 +1,7 @@
 package tn.esprit.wafik_lahbib_4cce10.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -15,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,6 +31,8 @@ public class Equipement {
     private String libelle;
 
     // Côté inverse de Vehicule <-> Equipement : aucune colonne ni table supplémentaire.
+    // Côté inverse : non sérialisé en JSON (évite la boucle infinie, Atelier 5).
+    @JsonIgnore
     @ManyToMany(mappedBy = "equipements", fetch = FetchType.LAZY)
     private Set<Vehicule> vehicules = new HashSet<>();
 }

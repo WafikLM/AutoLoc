@@ -1,5 +1,7 @@
 package tn.esprit.wafik_lahbib_4cce10.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -19,6 +21,7 @@ import lombok.Setter;
 import java.time.LocalDate;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -46,6 +49,8 @@ public class Reservation {
     private Vehicule vehicule;
 
     // Côté inverse de Reservation <-> Contrat : la clé étrangère id_reservation est portée par Contrat.
+    // Côté inverse : non sérialisé en JSON (évite la boucle infinie, Atelier 5).
+    @JsonIgnore
     @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Contrat contrat;
 }

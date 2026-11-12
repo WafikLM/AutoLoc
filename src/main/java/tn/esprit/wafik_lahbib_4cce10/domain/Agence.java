@@ -1,5 +1,7 @@
 package tn.esprit.wafik_lahbib_4cce10.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,10 +35,14 @@ public class Agence {
 
     // Côté inverse : la clé étrangère id_agence est portée par Vehicule.
     // Aucune cascade : un véhicule survit à son agence.
+    // Côté inverse : non sérialisé en JSON (évite la boucle infinie, Atelier 5).
+    @JsonIgnore
     @OneToMany(mappedBy = "agence", fetch = FetchType.LAZY)
     private List<Vehicule> vehicules = new ArrayList<>();
 
     // Côté inverse : la clé étrangère id_agence est portée par Employe. Aucune cascade.
+    // Côté inverse : non sérialisé en JSON (évite la boucle infinie, Atelier 5).
+    @JsonIgnore
     @OneToMany(mappedBy = "agence", fetch = FetchType.LAZY)
     private List<Employe> employes = new ArrayList<>();
 }
