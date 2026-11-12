@@ -119,3 +119,13 @@ Les deux sont complémentaires : Postman vérifie le comportement, Swagger décr
 - `assignAgence` / `assignEquipement` / `unassignEquipement` : les deux objets existent déjà ; on modifie seulement le lien (`setAgence`, ajout ou retrait dans la collection `equipements`, donc dans la table `vehicule_equipement`). `unassignEquipement` ne supprime pas l'équipement de la base.
 - `VehiculeServiceImpl` reçoit en plus `IAgenceRepository` et `IEquipementRepository` (injection par constructeur) ; les méthodes sont `@Transactional`.
 - Tests : dossier Postman « Véhicules - affectations (agence, équipements) ».
+
+## G. Service `Contrat addWithPayments(Contrat c)`
+
+| Méthode de `IContratService` | Route | Succès | Erreurs |
+|---|---|---|---|
+| `addWithPayments(Contrat contrat)` | POST /api/contrats/avec-paiements | 201 | 400 (id fourni, aucun paiement, montant de paiement ≤ 0, somme des paiements > montant total) |
+
+- Le contrat arrive en JSON avec sa liste `paiements`. Pour chaque paiement, le service fait `paiement.setContrat(contrat)` (côté propriétaire de la relation : sinon la clé étrangère serait nulle), puis un **seul** `contratRepository.save(contrat)` : les paiements sont insérés par la cascade (`CascadeType.ALL` sur `Contrat.paiements`). Méthode `@Transactional`.
+- Supprimer le contrat supprime aussi ses paiements (cascade REMOVE / orphanRemoval).
+- Tests : dossier Postman « Contrats - addWithPayments ».

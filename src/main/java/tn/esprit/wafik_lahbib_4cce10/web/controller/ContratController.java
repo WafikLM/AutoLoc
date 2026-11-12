@@ -79,4 +79,16 @@ public class ContratController {
     public void deleteById(@Parameter(description = "Identifiant du contrat") @PathVariable Long id) {
         contratService.deleteById(id);
     }
+
+    @Operation(summary = "Ajouter un contrat avec ses paiements",
+            description = "Les paiements (sans identifiant) sont créés en cascade avec le contrat.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Contrat et paiements créés"),
+            @ApiResponse(responseCode = "400", description = "Identifiant fourni, aucun paiement, montant de paiement non positif ou somme des paiements supérieure au montant total")
+    })
+    @PostMapping("/avec-paiements")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Contrat addWithPayments(@RequestBody Contrat contrat) {
+        return contratService.addWithPayments(contrat);
+    }
 }

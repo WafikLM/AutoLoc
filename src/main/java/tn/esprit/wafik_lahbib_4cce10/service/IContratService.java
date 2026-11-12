@@ -14,4 +14,7 @@ public interface IContratService {
     Contrat update(Long id, Contrat contrat);
 
     void deleteById(Long id);
+
+    // ajoute un contrat avec ses paiements (créés en cascade)
+    Contrat addWithPayments(Contrat contrat);
 }

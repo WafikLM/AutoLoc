@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.wafik_lahbib_4cce10.domain.Contrat;
+import tn.esprit.wafik_lahbib_4cce10.domain.Paiement;
 import tn.esprit.wafik_lahbib_4cce10.exception.ResourceNotFoundException;
 import tn.esprit.wafik_lahbib_4cce10.repository.IContratRepository;
 
@@ -52,6 +54,40 @@ public class ContratServiceImpl implements IContratService {
             throw new ResourceNotFoundException("Contrat", id);
         }
         contratRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public Contrat addWithPayments(Contrat contrat) {
+        if (contrat.getIdContrat() != null) {
+            throw new IllegalArgumentException(
+                    "Un nouveau contrat ne doit pas avoir d'identifiant");
+        }
+        verifier(contrat);
+        if (contrat.getPaiements() == null || contrat.getPaiements().isEmpty()) {
+            throw new IllegalArgumentException("Le contrat doit contenir au moins un paiement");
+        }
+        BigDecimal totalPaiements = BigDecimal.ZERO;
+        for (Paiement paiement : contrat.getPaiements()) {
+            if (paiement.getIdPaiement() != null) {
+                throw new IllegalArgumentException(
+                        "Un nouveau paiement ne doit pas avoir d'identifiant");
+            }
+            if (paiement.getMontant() == null
+                    || paiement.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Le montant d'un paiement doit être positif");
+            }
+            // lien côté propriétaire : sans lui, la clé étrangère du paiement serait nulle
+            paiement.setContrat(contrat);
+            totalPaiements = totalPaiements.add(paiement.getMontant());
+        }
+        if (contrat.getMontantTotal() != null
+                && totalPaiements.compareTo(contrat.getMontantTotal()) > 0) {
+            throw new IllegalArgumentException(
+                    "La somme des paiements dépasse le montant total du contrat");
+        }
+        // un seul save : les paiements sont insérés par la cascade (CascadeType.ALL)
+        return contratRepository.save(contrat);
     }
 
     // règle de gestion
